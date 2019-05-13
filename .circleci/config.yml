@@ -1,0 +1,90 @@
+version: 2.1
+
+executors:
+  jdk:
+    docker:
+      - image: openjdk:8-jdk-slim
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
+
+commands:
+  with_cache:
+    parameters:
+      steps:
+        type: steps
+    steps:
+      - restore_cache:
+          keys:
+            - v3-{{ checksum "build.gradle.kts" }}-{{ checksum "buildSrc/src/main/kotlin/Plugin.kt" }}-{{ checksum "buildSrc/src/main/kotlin/Lib.kt" }}
+            - v3-{{ checksum "build.gradle.kts" }}-{{ checksum "buildSrc/src/main/kotlin/Plugin.kt" }}
+            - v3-{{ checksum "build.gradle.kts" }}
+            - v3-
+      - steps: << parameters.steps >>
+
+jobs:
+  compile:
+    executor: jdk
+    steps:
+      - checkout
+      - with_cache:
+          steps:
+            - run:
+                command: ./gradlew classes
+                name: Compiling main classes
+            - save_cache:
+                key: v3-{{ checksum "build.gradle.kts" }}-{{ checksum "buildSrc/src/main/kotlin/Plugin.kt" }}-{{ checksum "buildSrc/src/main/kotlin/Lib.kt" }}
+                paths:
+                  - ~/.gradle
+            - persist_to_workspace:
+                root: .
+                paths:
+                  - build
+                  - buildSrc/build
+
+  check:
+    executor: jdk
+    steps:
+      - checkout
+      - with_cache:
+          steps:
+            - attach_workspace:
+                at: .
+            - run:
+                command: ./gradlew check
+                name: Running tests
+            - store_test_results:
+                path: build/test-results
+            - store_artifacts:
+                path: build/reports
+
+  build:
+    executor: jdk
+    steps:
+      - checkout
+      - with_cache:
+          steps:
+            - attach_workspace:
+                at: .
+            - run:
+                command: ./gradlew shadowJar
+                name: Building jar
+            - run:
+                # TODO: replace name
+                command: mv build/libs/musicbot-template-*.jar build/libs/musicbot-template.jar
+                name: Renaming jar
+            - store_artifacts:
+                path: build/libs
+                destination: dist
+
+workflows:
+  full_workflow:
+    jobs:
+      - compile
+      - check:
+          requires:
+            - compile
+      - build:
+          requires:
+            - compile
+            # As long as the CircleCI API doesn't understand workflows
+            - check
