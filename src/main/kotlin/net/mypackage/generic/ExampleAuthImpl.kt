@@ -1,24 +1,18 @@
 package net.mypackage.generic
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import net.bjoernpetersen.musicbot.api.config.ActionButton
 import net.bjoernpetersen.musicbot.api.config.Config
+import net.bjoernpetersen.musicbot.api.plugin.PluginScope
 import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import kotlin.coroutines.CoroutineContext
 
-class ExampleAuthImpl : ExampleAuth, CoroutineScope {
+class ExampleAuthImpl : ExampleAuth, CoroutineScope by PluginScope() {
     override val name = "ExampleAuth"
     override val description = "Provides an authentication token for ExampleService"
-
-    // A Job that is tied to this plugin's lifecycle
-    private val job = Job()
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.IO + job
 
     private lateinit var token: Config.StringEntry
 
@@ -74,9 +68,11 @@ class ExampleAuthImpl : ExampleAuth, CoroutineScope {
     override fun createStateEntries(state: Config) {}
 
     override suspend fun close() {
-        // do whatever blocking action here to close any resources
+        run {
+            // Cancel the plugin coroutine scope
+            cancel()
+        }
 
-        // Close job associated with this plugin
-        job.cancel()
+        // do whatever blocking action here to close any resources
     }
 }

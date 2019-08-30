@@ -1,20 +1,13 @@
 package net.mypackage.generic
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import net.bjoernpetersen.musicbot.api.config.Config
+import net.bjoernpetersen.musicbot.api.plugin.PluginScope
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import kotlin.coroutines.CoroutineContext
 
-class TemplatePluginImpl : TemplatePlugin, CoroutineScope {
-    private val job = Job()
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.IO + job
-
+class TemplatePluginImpl : TemplatePlugin, CoroutineScope by PluginScope() {
     override val name: String = TODO("Choose a name")
     override val description = TODO("Write a description")
 
@@ -37,13 +30,9 @@ class TemplatePluginImpl : TemplatePlugin, CoroutineScope {
     }
 
     override suspend fun close() {
-        // Don't accept new children
-        job.complete()
-        try {
-            // wait for job to complete
-            withTimeout(500) { job.join() }
-        } catch (e: TimeoutCancellationException) {
-            job.cancel()
+        run {
+            // Cancel the plugin coroutine scope
+            cancel()
         }
 
         // TODO: Release all resources

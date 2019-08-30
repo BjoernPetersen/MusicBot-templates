@@ -1,16 +1,14 @@
 package net.mypackage.provider
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.loader.FileResource
 import net.bjoernpetersen.musicbot.api.player.Song
 import net.bjoernpetersen.musicbot.api.player.song
+import net.bjoernpetersen.musicbot.api.plugin.PluginScope
 import net.bjoernpetersen.musicbot.spi.loader.Resource
 import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
@@ -19,18 +17,13 @@ import net.bjoernpetersen.musicbot.spi.plugin.predefined.Mp3PlaybackFactory
 import net.mypackage.generic.ExampleAuth
 import java.io.File
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
-class ExampleProviderImpl : ExampleProvider, CoroutineScope {
+class ExampleProviderImpl : ExampleProvider, CoroutineScope by PluginScope() {
 
     override val name = "ExampleServer default"
     override val description = "This is a plugin description."
     // The name of the service this is getting its songs from
     override val subject = "Example service"
-
-    private val job = Job()
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.IO + job
 
     @Inject
     private lateinit var auth: ExampleAuth
@@ -101,13 +94,9 @@ class ExampleProviderImpl : ExampleProvider, CoroutineScope {
     }
 
     override suspend fun close() {
-        // Don't accept new children
-        job.complete()
-        try {
-            // wait for job to complete
-            withTimeout(500) { job.join() }
-        } catch (e: TimeoutCancellationException) {
-            job.cancel()
+        run {
+            // Cancel the plugin coroutine scope
+            cancel()
         }
         // Release all resources
         api.close()
