@@ -10,6 +10,7 @@ import kotlinx.coroutines.withTimeout
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.loader.FileResource
 import net.bjoernpetersen.musicbot.api.player.Song
+import net.bjoernpetersen.musicbot.api.player.song
 import net.bjoernpetersen.musicbot.spi.loader.Resource
 import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
@@ -42,7 +43,7 @@ class ExampleProviderImpl : ExampleProvider, CoroutineScope {
 
     override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> = emptyList()
 
-    override fun createStateEntries(state: Config) {}
+    override fun createStateEntries(state: Config) = Unit
 
     override suspend fun initialize(initStateWriter: InitStateWriter) {
         withContext(coroutineContext) {
@@ -54,13 +55,13 @@ class ExampleProviderImpl : ExampleProvider, CoroutineScope {
     }
 
     private fun ApiSong.toSong(): Song {
-        return Song(
-            id = id,
-            provider = this@ExampleProviderImpl,
-            title = title,
-            description = description,
-            duration = duration
-        )
+        return this.let { apiSong ->
+            song(id) {
+                title = apiSong.title
+                description = apiSong.description
+                duration = apiSong.duration
+            }
+        }
     }
 
     override suspend fun search(query: String, offset: Int): List<Song> {
@@ -121,7 +122,9 @@ private data class ApiSong(
     val title: String,
     val description: String,
     val duration: Int
-)
+) {
+
+}
 
 @Suppress("unused", "UNUSED_PARAMETER")
 private class ExampleApi private constructor(private val token: String) {
