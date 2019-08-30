@@ -111,9 +111,7 @@ private data class ApiSong(
     val title: String,
     val description: String,
     val duration: Int
-) {
-
-}
+)
 
 @Suppress("unused", "UNUSED_PARAMETER")
 private class ExampleApi private constructor(private val token: String) {
