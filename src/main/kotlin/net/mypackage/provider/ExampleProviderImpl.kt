@@ -1,5 +1,7 @@
 package net.mypackage.provider
 
+import java.io.File
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -15,8 +17,6 @@ import net.bjoernpetersen.musicbot.spi.plugin.Playback
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
 import net.bjoernpetersen.musicbot.spi.plugin.predefined.Mp3PlaybackFactory
 import net.mypackage.generic.ExampleAuth
-import java.io.File
-import javax.inject.Inject
 
 class ExampleProviderImpl : ExampleProvider, CoroutineScope by PluginScope() {
 

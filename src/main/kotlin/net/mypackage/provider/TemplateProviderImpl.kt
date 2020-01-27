@@ -1,5 +1,6 @@
 package net.mypackage.provider
 
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
@@ -10,7 +11,6 @@ import net.bjoernpetersen.musicbot.spi.loader.Resource
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackFactory
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import javax.inject.Inject
 
 class TemplateProviderImpl : TemplateProvider, CoroutineScope by PluginScope() {
     override val name: String = TODO("Choose a name")
